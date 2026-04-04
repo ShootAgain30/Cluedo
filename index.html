@@ -549,6 +549,55 @@ select.input-field option { background:var(--bg-panel); }
 }
 .turn-banner.my-turn { border-color:var(--gold); box-shadow:0 0 12px rgba(201,168,76,0.2); }
 
+/* ─── MÉMO INDICES ─── */
+.memo-btn {
+  width:100%;
+  padding:0.65rem 1rem;
+  background:rgba(100,80,180,0.08);
+  border:1px solid rgba(100,80,180,0.3);
+  border-radius:var(--radius);
+  color:#b0a0e0;
+  font-family:'Cormorant Garamond',serif;
+  font-size:1rem;
+  cursor:pointer;
+  text-align:left;
+  letter-spacing:0.03em;
+  display:flex;
+  align-items:center;
+  gap:0.5rem;
+}
+.memo-reveal {
+  background:rgba(0,0,0,0.7);
+  border-radius:var(--radius);
+  padding:1rem;
+  text-align:center;
+  display:none;
+}
+.memo-reveal.visible { display:block; }
+.memo-reveal-btn {
+  padding:0.7rem 1.4rem;
+  background:rgba(100,80,180,0.2);
+  border:1px solid rgba(100,80,180,0.5);
+  border-radius:var(--radius);
+  color:#c0b0f0;
+  font-family:'Cormorant Garamond',serif;
+  font-size:1rem;
+  cursor:pointer;
+  margin-bottom:0.8rem;
+}
+.memo-cards { display:flex; flex-wrap:wrap; gap:0.4rem; margin-top:0.5rem; }
+.memo-card {
+  padding:0.4rem 0.7rem;
+  border-radius:5px;
+  font-size:0.9rem;
+  display:flex;
+  flex-direction:column;
+}
+.memo-card.suspect { background:rgba(139,26,26,0.2); border:1px solid rgba(139,26,26,0.4); color:#e09080; }
+.memo-card.weapon  { background:rgba(100,80,180,0.2); border:1px solid rgba(100,80,180,0.4); color:#b0a0e0; }
+.memo-card.room    { background:rgba(201,168,76,0.12); border:1px solid rgba(201,168,76,0.3); color:#d4b870; }
+.memo-from { font-size:0.7rem; opacity:0.65; margin-top:2px; }
+
 /* Scrollbar */
 ::-webkit-scrollbar { width:4px; }
 ::-webkit-scrollbar-track { background:var(--bg-dark); }
@@ -671,6 +720,18 @@ select.input-field option { background:var(--bg-panel); }
     <div class="hand-section">
       <div class="hand-title">Vos cartes</div>
       <div class="hand-cards" id="hand-cards"></div>
+    </div>
+
+    <!-- MÉMO INDICES -->
+    <div id="memo-section">
+      <button class="memo-btn" onclick="toggleMemo()">
+        <span>🔍</span><span>Mes indices reçus</span><span id="memo-count" style="margin-left:auto;font-size:0.85rem;opacity:0.7;"></span>
+      </button>
+      <div class="memo-reveal" id="memo-reveal">
+        <button class="memo-reveal-btn" id="memo-reveal-btn" onclick="revealMemo()">👁 Appuyer pour révéler</button>
+        <div class="memo-cards" id="memo-cards" style="display:none;"></div>
+        <button onclick="hideMemo()" style="margin-top:0.6rem;background:none;border:none;color:var(--text-dim);font-size:0.9rem;cursor:pointer;">▲ Masquer</button>
+      </div>
     </div>
     <div class="log-box" id="log-box">
       <div class="log-entry">La partie commence...</div>
@@ -964,6 +1025,7 @@ function startGame() {
   G.logs = [];
   G.moveMode = false;
   G.pendingSuggest = null;
+  G.memos = {}; // { playerId: [{card, fromPlayer}] }
 
   // Construire joueurs
   G.players = setupPlayers.map((p,i)=>({
@@ -1265,6 +1327,11 @@ function processNextRefuter() {
     }
     // Si le joueur humain a suggéré, montrer la carte
     if(sugg.byPlayer===G.myPlayerId) {
+      // Enregistrer dans mémo
+      if(!G.memos[G.myPlayerId]) G.memos[G.myPlayerId] = [];
+      const alreadyKnown = G.memos[G.myPlayerId].some(m=>m.card.id===shown.id && m.from===refuter.name);
+      if(!alreadyKnown) G.memos[G.myPlayerId].push({ card:shown, from: refuter.name });
+      updateMemoCount();
       document.getElementById('suggest-result-text').innerHTML = `<span style="color:${refuter.colorHex}">${refuter.name}</span> vous montre : <b>${shown.name}</b>`;
       openModal('modal-suggest-result');
     } else {
@@ -1309,6 +1376,15 @@ function showCard(card, refuter, suggestorId) {
   closeModal('modal-refute');
   const suggestor = G.players.find(p=>p.id===suggestorId);
   addLog(`<span style="color:${refuter.colorHex}">${refuter.name}</span> montre une carte à <span style="color:${suggestor.colorHex}">${suggestor.name}</span>.`);
+
+  // Enregistrer dans le mémo du suggérant
+  if(!G.memos[suggestorId]) G.memos[suggestorId] = [];
+  // Eviter les doublons
+  const alreadyKnown = G.memos[suggestorId].some(m=>m.card.id===card.id && m.from===refuter.name);
+  if(!alreadyKnown) {
+    G.memos[suggestorId].push({ card, from: refuter.name });
+  }
+  updateMemoCount();
 
   if(suggestorId===G.myPlayerId) {
     document.getElementById('suggest-result-text').innerHTML = `<span style="color:${refuter.colorHex}">${refuter.name}</span> vous montre : <b>${card.name}</b>`;
@@ -1391,6 +1467,7 @@ function nextTurn() {
 
   renderBoard();
   updateTurnUI();
+  hideMemo();
 
   if(isCurrentPlayerAI()) {
     setTimeout(doAITurn, 1000);
@@ -1619,6 +1696,51 @@ function leaveLobby() {
   if(clientConn) { clientConn.close(); clientConn=null; }
   G.connections=[];
   showScreen('screen-home');
+}
+
+// ══════════════════════════════════════════════════
+// MÉMO INDICES
+// ══════════════════════════════════════════════════
+function updateMemoCount() {
+  const entries = (G.memos[G.myPlayerId] || []);
+  const el = document.getElementById('memo-count');
+  if(el) el.textContent = entries.length ? `(${entries.length})` : '';
+}
+
+function toggleMemo() {
+  const reveal = document.getElementById('memo-reveal');
+  if(!reveal) return;
+  if(reveal.classList.contains('visible')) {
+    hideMemo();
+  } else {
+    reveal.classList.add('visible');
+    document.getElementById('memo-cards').style.display = 'none';
+    document.getElementById('memo-reveal-btn').style.display = 'block';
+  }
+}
+
+function revealMemo() {
+  const entries = G.memos[G.myPlayerId] || [];
+  const container = document.getElementById('memo-cards');
+  container.innerHTML = '';
+  if(entries.length === 0) {
+    container.innerHTML = '<p style="color:var(--text-dim);font-style:italic;font-size:0.9rem;">Aucun indice reçu pour l\'instant.</p>';
+  } else {
+    entries.forEach(({card, from}) => {
+      const el = document.createElement('div');
+      el.className = `memo-card ${card.type}`;
+      const typeLabel = {suspect:'Suspect',weapon:'Arme',room:'Pièce'}[card.type];
+      el.innerHTML = `<span style="font-size:0.7rem;opacity:0.6;">${typeLabel}</span><b>${card.name}</b><span class="memo-from">montré par ${from}</span>`;
+      container.appendChild(el);
+    });
+  }
+  container.style.display = 'flex';
+  document.getElementById('memo-reveal-btn').style.display = 'none';
+}
+
+function hideMemo() {
+  const reveal = document.getElementById('memo-reveal');
+  if(reveal) reveal.classList.remove('visible');
 }
 
 // ══════════════════════════════════════════════════
