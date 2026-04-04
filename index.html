@@ -761,6 +761,10 @@ select.input-field option { background:var(--bg-panel); }
       <select class="input-field" id="suggest-weapon"></select>
     </div>
     <p style="font-size:0.85rem;color:var(--cream-dim);font-style:italic;" id="suggest-room-info"></p>
+    <div style="margin-top:0.8rem;padding-top:0.8rem;border-top:1px solid var(--border);">
+      <p style="font-size:0.78rem;color:var(--text-dim);letter-spacing:0.05em;text-transform:uppercase;margin-bottom:0.4rem;">Vos cartes</p>
+      <div id="suggest-hand-cards" style="display:flex;flex-wrap:wrap;gap:0.4rem;"></div>
+    </div>
     <div class="modal-actions">
       <button class="btn btn-small btn-primary" onclick="confirmSuggest()">Suggérer</button>
       <button class="btn btn-small" onclick="closeModal('modal-suggest')">Annuler</button>
@@ -1257,7 +1261,23 @@ function openSuggestModal() {
   const cp = G.players[G.currentPlayerIdx];
   populateSelects('suggest', SUSPECTS, WEAPONS, []);
   const roomInfo = document.getElementById('suggest-room-info');
-  roomInfo.textContent = `Pièce actuelle : ${ROOMS[cp.roomIdx].name}`;
+  roomInfo.textContent = `Pièce : ${ROOMS[cp.roomIdx].name}`;
+
+  // Afficher les cartes du joueur actuel
+  const handContainer = document.getElementById('suggest-hand-cards');
+  handContainer.innerHTML = '';
+  const myPlayer = G.players.find(p=>p.id===G.myPlayerId);
+  if(myPlayer) {
+    myPlayer.cards.forEach(card => {
+      const el = document.createElement('div');
+      el.className = `card ${card.type}`;
+      el.style.fontSize = '0.82rem';
+      el.style.padding = '0.3rem 0.5rem';
+      const typeLabel = {suspect:'Suspect',weapon:'Arme',room:'Pièce'}[card.type];
+      el.innerHTML = `<span class="card-type">${typeLabel}</span>${card.name}`;
+      handContainer.appendChild(el);
+    });
+  }
   openModal('modal-suggest');
 }
 
