@@ -4,8 +4,8 @@ const FILES_CORE = [
   './index.html',
   './manifest.json',
   './icone-512',
-  './icone-192',
-  'https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap',
+  './icone-192'
+ 
 ];
 
 // ── INSTALL ──
