@@ -1,4 +1,4 @@
-const CACHE_NAME = 'manoir-v1.0.0';
+const CACHE_NAME = 'manoir-v1.0.1';
 const FILES_CORE = [
   './',
   './index.html',
