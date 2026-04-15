@@ -1,0 +1,22 @@
+LICENCE PROPRIÉTAIRE — Syst'MD
+Copyright (c) 2025 Bernard V. (Syst'MD). Tous droits réservés.
+
+Le présent logiciel, ses fichiers sources, ses ressources graphiques et sonores,
+ainsi que toute documentation associée (ci-après « le Logiciel ») sont la propriété
+exclusive de Bernard V., opérant sous le nom Syst'MD.
+
+IL EST STRICTEMENT INTERDIT de :
+- copier, reproduire ou dupliquer tout ou partie du Logiciel ;
+- modifier, adapter, traduire ou créer des œuvres dérivées basées sur le Logiciel ;
+- distribuer, publier, vendre, sous-licencier ou transférer le Logiciel à des tiers ;
+- utiliser le Logiciel à des fins commerciales sans autorisation écrite préalable ;
+- supprimer ou modifier les mentions de droits d'auteur présentes dans le Logiciel.
+
+L'ACCÈS AU LOGICIEL est autorisé uniquement à des fins de consultation et d'usage
+personnel non commercial, via les canaux de distribution officiels de Syst'MD.
+
+Toute violation de la présente licence expose son auteur à des poursuites judiciaires
+conformément aux dispositions du Code de la propriété intellectuelle français,
+notamment les articles L.335-2 et suivants relatifs à la contrefaçon.
+
+Pour toute demande d'autorisation, contacter : ShootAgain30 (GitHub)
